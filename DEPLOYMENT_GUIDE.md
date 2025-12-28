@@ -1,39 +1,89 @@
-# Deployment Guide - Streamlit Cloud
+# 🚀 Deployment Guide
 
-## Secure Deployment Without Committing Passwords
+### Secure Deployment for the AI RAG Chatbot
 
-### Option 1: Streamlit Cloud (Recommended) ⭐
+This document outlines **recommended deployment strategies** for the AI RAG Chatbot, with a strong focus on **security**, **secret management**, and **cloud best practices**.
+At no point are API keys or sensitive credentials committed to the repository.
 
-**Step 1: Prepare Your Repository**
+---
+
+## 🔐 Security Principles
+
+Before deploying, ensure the following:
+
+* API keys are **never committed** to GitHub
+* Secrets are injected via **environment variables** or **secret managers**
+* `.env` and `.streamlit/secrets.toml` are listed in `.gitignore`
+
+---
+
+## ✅ Recommended Deployment: Streamlit Cloud
+
+Streamlit Cloud is the **simplest and safest** way to deploy this application.
+
+---
+
+### Step 1: Repository Preparation
+
+Confirm sensitive files are ignored:
+
 ```bash
-# Make sure .env and secrets.toml are in .gitignore
-git add .gitignore
-git commit -m "Add .env and secrets to gitignore"
-git push
+# Ensure secrets are not tracked
+.env
+.streamlit/secrets.toml
+.venv/
 ```
 
-**Step 2: Deploy to Streamlit Cloud**
-1. Go to [streamlit.io](https://streamlit.io)
-2. Click "Deploy an app" → Sign in with GitHub
-3. Select your repository
-4. Choose branch: `main`
-5. Set Main file path: `app.py`
-6. Click "Deploy"
+Commit and push the latest code:
 
-**Step 3: Add Secrets in Dashboard**
-1. After deployment, go to your app's settings
-2. Click "Settings" → "Secrets"
-3. Add your secrets in TOML format:
+```bash
+git add .
+git commit -m "Prepare project for secure deployment"
+git push origin main
+```
+
+---
+
+### Step 2: Deploy the Application
+
+1. Visit **[https://streamlit.io](https://streamlit.io)**
+2. Click **Deploy an app**
+3. Authenticate using GitHub
+4. Select your repository
+5. Choose:
+
+   * **Branch:** `main`
+   * **Main file:** `app.py`
+6. Click **Deploy**
+
+---
+
+### Step 3: Configure Secrets (Required)
+
+After deployment:
+
+1. Open your deployed app dashboard
+2. Navigate to **Settings → Secrets**
+3. Add secrets in **TOML format**:
+
 ```toml
-GROQ_API_KEY = "your_actual_groq_key"
-TAVILY_API_KEY = "your_actual_tavily_key"
-HUGGINGFACE_API_KEY = "your_actual_huggingface_key"
+GROQ_API_KEY = "your_groq_api_key"
+TAVILY_API_KEY = "your_tavily_api_key"
 ```
-4. Click "Save" → Streamlit will restart your app
 
-### Option 2: Docker + Environment Variables
+4. Click **Save**
+   The app will automatically restart with secure access to the keys.
 
-**Create `Dockerfile`:**
+---
+
+## 🐳 Alternative Deployment: Docker
+
+For containerized or enterprise environments, Docker can be used.
+
+---
+
+### Dockerfile
+
 ```dockerfile
 FROM python:3.11-slim
 
@@ -49,68 +99,119 @@ EXPOSE 8501
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 ```
 
-**Run locally:**
+---
+
+### Build & Run Locally
+
 ```bash
-docker build -t my-rag-app .
-docker run -e GROQ_API_KEY="your_key" -e TAVILY_API_KEY="your_key" -p 8501:8501 my-rag-app
+docker build -t ai-rag-chatbot .
+docker run \
+  -e GROQ_API_KEY="your_key" \
+  -e TAVILY_API_KEY="your_key" \
+  -p 8501:8501 ai-rag-chatbot
 ```
 
-### Option 3: Environment Variables (Any Cloud Platform)
+---
 
-**Use these environment variables:**
-- `GROQ_API_KEY` - Your Groq API key
-- `TAVILY_API_KEY` - Your Tavily API key
-- `HUGGINGFACE_API_KEY` - Your HuggingFace token (if needed)
+## ☁️ Deployment via Environment Variables (Any Cloud Provider)
 
-Each cloud platform has different ways to set secrets:
+The application supports standard environment variables:
 
-**Heroku:**
+| Variable         | Description               |
+| ---------------- | ------------------------- |
+| `GROQ_API_KEY`   | Groq LLM API key          |
+| `TAVILY_API_KEY` | Tavily web search API key |
+
+---
+
+### Example: Heroku
+
 ```bash
 heroku config:set GROQ_API_KEY="your_key"
 heroku config:set TAVILY_API_KEY="your_key"
 ```
 
-**AWS:**
-- Use AWS Secrets Manager
-- Reference in environment variables
+---
 
-**Google Cloud:**
-- Use Google Cloud Secret Manager
-- Reference in Cloud Run environment
+### Example: AWS / GCP
 
-## Local Development
+* Use **Secrets Manager**
+* Inject values as environment variables at runtime
+* Do not hardcode credentials in Docker images or code
 
-1. Create `.streamlit/secrets.toml` with your keys:
+---
+
+## 🧪 Local Development Setup
+
+For local testing without exposing credentials:
+
+### 1. Create Secrets File
+
+```bash
+.streamlit/secrets.toml
+```
+
 ```toml
 GROQ_API_KEY = "sk-..."
 TAVILY_API_KEY = "tvly-..."
 ```
 
-2. Run locally:
+### 2. Run the Application
+
 ```bash
 streamlit run app.py
 ```
 
-## Security Best Practices ✅
+---
 
-1. ✅ Never commit `.env` or `.streamlit/secrets.toml`
-2. ✅ Always use environment variables or secrets managers
-3. ✅ Rotate keys periodically
-4. ✅ Use different keys for dev/prod
-5. ✅ Never share API keys in code or documentation
+## 🔐 Security Best Practices (Mandatory)
 
-## Troubleshooting
+* ✅ Never commit secrets or tokens
+* ✅ Use environment-based configuration
+* ✅ Rotate API keys periodically
+* ✅ Use separate keys for development and production
+* ✅ Avoid cloud-synced directories (e.g., OneDrive) for deployment
 
-**"API Key not found"**
-- Check that secrets are added to Streamlit dashboard
-- Restart your app after adding secrets
-- Verify the exact key names match
+---
 
-**"ModuleNotFoundError: streamlit"**
-- Make sure `requirements.txt` includes `streamlit>=1.38.0`
-- Run `pip install -r requirements.txt`
+## 🧯 Troubleshooting
 
-**Secrets not loading in local development**
-- Ensure `.streamlit/secrets.toml` exists
-- Check file format is valid TOML
-- Restart Streamlit: `streamlit run app.py`
+### Issue: **API Key Not Found**
+
+* Verify secrets are added in Streamlit dashboard
+* Ensure variable names match exactly
+* Restart the application after saving secrets
+
+---
+
+### Issue: **ModuleNotFoundError: streamlit**
+
+* Confirm `streamlit` is listed in `requirements.txt`
+* Reinstall dependencies:
+
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+---
+
+### Issue: **Secrets Not Loading Locally**
+
+* Confirm `.streamlit/secrets.toml` exists
+* Validate TOML formatting
+* Restart Streamlit:
+
+  ```bash
+  streamlit run app.py
+  ```
+
+---
+
+## ✅ Final Notes
+
+This deployment setup follows **industry-standard security practices** and is suitable for:
+
+* Academic submissions
+* Portfolio projects
+* Production-style demos
+* Cloud-hosted AI applications
